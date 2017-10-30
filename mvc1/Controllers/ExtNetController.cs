@@ -18,13 +18,13 @@ namespace mvc1.Controllers
             return this.View(model);
         }
 
-        public ActionResult SampleAction(string message)
+        public ActionResult SampleAction(string TextField3)
         {
             X.Msg.Notify(new NotificationConfig
             {
                 Icon = Icon.Accept,
                 Title = "Working",
-                Html = message
+               
             }).Show();
 
             return this.Direct();

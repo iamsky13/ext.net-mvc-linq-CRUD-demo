@@ -11,6 +11,35 @@
     <meta name="viewport" content="width=device-width" />
     <title>grid</title>
     @(Html.X().ResourceManager())
+    <script>
+        var edit = function (editor, e) {
+            /*
+                "e" is an edit event with the following properties:
+
+                    grid - The grid
+                    record - The record that was edited
+                    field - The field name that was edited
+                    value - The value being set
+                    originalValue - The original value for the field, before the edit.
+                    row - The grid table row
+                    column - The grid Column defining the column that was edited.
+                    rowIdx - The row index that was edited
+                    colIdx - The column index that was edited
+            */
+
+            // Call DirectMethod
+            if (!(e.value === e.originalValue || (Ext.isDate(e.value) && Ext.Date.isEqual(e.value, e.originalValue)))) {
+                Ext.net.DirectMethod.request({
+                    url: '@(Url.Action("Edit"))',
+                    params: {
+                        id: e.record.data.Id,
+                        name: e.record.data.Name,
+                        unitPrice: e.UnitPrice
+                    }
+                });
+            }
+        };
+    </script>
 </head>
 <body>
     <div> 
@@ -22,17 +51,7 @@
             }
         </style>
 
-        <script>
-            var template = '<span style="color:{0};">{1}</span>';
-
-            var change = function (value) {
-                return Ext.String.format(template, (value > 0) ? "green" : "red", value);
-            };
-
-            var pctChange = function (value) {
-                return Ext.String.format(template, (value > 0) ? "green" : "red", value + "%");
-            };
-        </script>
+       
         }
 
         @{
@@ -45,70 +64,48 @@
                 .Store(Html.X().Store()
                     .Model(Html.X().Model()
                         .Fields(
-                            new ModelField("company"),
-                            new ModelField("price", ModelFieldType.Float),
-                            new ModelField("change", ModelFieldType.Float),
-                            new ModelField("pctChange", ModelFieldType.Float),
-                            new ModelField("lastChange", ModelFieldType.Date, "M/d hh:mmtt")
+                            new ModelField("Id"),
+                            new ModelField("Name"),
+                            new ModelField("UnitPrice"),
+                            new ModelField("catId")                           
                         )
                     )
                     .DataSource(Model)
                 )
                 .ColumnModel(
-                    Html.X().Column().Text("Company").DataIndex("company").Flex(1),
-                    Html.X().Column().Text("Price").DataIndex("price").Renderer(RendererFormat.UsMoney),
-                    Html.X().Column().Text("Change").DataIndex("change").Renderer("change"),
-                    Html.X().Column().Text("Change").DataIndex("pctChange").Renderer("pctChange"),
-                    Html.X().DateColumn().Text("Last Updated").DataIndex("lastChange")
+                    Html.X().Column().Text("Name").DataIndex("Name").Flex(1).Editor(Html.X().TextField()),
+                    Html.X().Column().Text("Price").DataIndex("UnitPrice")
+                    
                 )
+                .SelectionModel(Html.X().CellSelectionModel())
+                .Plugins(
+                    Html.X().CellEditing().Listeners(ls => ls.Edit.Fn = "edit")
+                )
+
             )
 
 
+            
 
 
 
-        @(Html.BeginForm("submitdata", "Home", FormMethod.Post))
-        {
-            @(Html.X().ComboBox()
-            .ID("ComboBoxCountry")
-            .Editable(false)
-            .QueryMode(DataLoadMode.Local)
-            .TriggerAction(TriggerAction.All)
-            .EmptyText("Select a country")
 
+
+
+        @(
+        Html.X().FormPanel()
+            .Title("Information")
+            .Width(350)
+            .BodyPadding(5)
+            .Frame(true)
+            .Layout(LayoutType.Form)
+            .FormBind(true)
             .Items(
-                new ListItem("Belgium", "BE"),
-                new ListItem("Brazil", "BR"),
-                new ListItem("Bulgaria", "BG"),
-                new ListItem("Canada", "CA"),
-                new ListItem("Chile", "CL"),
-                new ListItem("Cyprus", "CY"),
-                new ListItem("Finland", "FI"),
-                new ListItem("France", "FR"),
-                new ListItem("Germany", "DE"),
-                new ListItem("Hungary", "HU"),
-                new ListItem("Ireland", "IE"),
-                new ListItem("Israel", "IL"),
-                new ListItem("Italy", "IT"),
-                new ListItem("Lithuania", "LT"),
-                new ListItem("Mexico", "MX"),
-                new ListItem("Netherlands", "NL"),
-                new ListItem("New Zealand", "NZ"),
-                new ListItem("Norway", "NO"),
-                new ListItem("Pakistan", "PK"),
-                new ListItem("Poland", "PL"),
-                new ListItem("Romania", "RO"),
-                new ListItem("Slovakia", "SK"),
-                new ListItem("Slovenia", "SI"),
-                new ListItem("Spain", "ES"),
-                new ListItem("Sweden", "SE"),
-                new ListItem("Switzerland", "CH"),
-                new ListItem("United Kingdom", "GB")
-            )
-            )
-
-            @(Html.X().ComboBox()
+                Html.X().TextField().ID("message").Name("message").FieldLabel("Name").AllowBlank(false),
+                
+                Html.X().ComboBox()
                     .ID("ComboBoxCity")
+                    .Name("ComboBoxCity")
                     .TypeAhead(true)
                     .QueryMode(DataLoadMode.Local)
                     .ForceSelection(true)
@@ -130,21 +127,29 @@
                             .Url(Url.Action("GetCities"))
                             .Reader(Html.X().JsonReader().RootProperty("data"))
                         )
-                        .Parameters(ps =>
-                                ps.Add(new StoreParameter("country", "App.ComboBoxCountry.getValue()", ParameterMode.Raw))
-                            )
+                            //.Parameters(ps =>
+                            //        ps.Add(new StoreParameter("country", "App.ComboBoxCountry.getValue()", ParameterMode.Raw))
+                            //    )
                             .Listeners(ls =>
                                 ls.Load.Handler = @"var combo = App.ComboBoxCity;
                                                     combo.setValue(records[0].get(combo.valueField));"
                             )
-
-                        
-
                     )
-
             )
-        }
-            <input type="submit" value="submit"/>
+
+            .Buttons(
+                Html.X().Button()
+                    .Text("Submit")
+                    .Icon(Icon.Lightning)
+                    .FormBind(true)
+                    .Handler("#{DirectMethods}.LogCompanyInfo(App.TextField3.getValue(), App.ComboBox3.getValue());")
+                    .DirectClickAction("SampleAction")
+            )
+        )
+
+
+
+        
             }
 
     </div>

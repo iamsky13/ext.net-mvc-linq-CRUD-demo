@@ -25,16 +25,8 @@ namespace mvc1.Controllers
             //SelectList list = new SelectList(getlist, "CategoryID", "Name");
             Category category = new Category();
             List<Category> data = dbcontext.Categories.ToList();
-            List<object> data1 = new List<object>();
-            foreach (var myitem in getlist)
-            {
-                Guid id = myitem.CategoryID;
-                string name = myitem.Name;
-                data1.Add(new { Id = id, Name = name });
-            }
-
-            ViewBag.CatList = data1;
-            return View(Companies.GetAllCompanies());
+            
+            return View(getProductList.GetProducts());
 
         }
 
@@ -42,17 +34,40 @@ namespace mvc1.Controllers
         {
             return this.Store(CIty.GetCities(country));
         }
-        public ActionResult submitdata(Category cat)
-        {
-            return View();
-        }
 
-        [DirectMethod]
-        public ActionResult LogCompanyInfo(String name, Guid Id)
+        public DirectResult Edit(Guid id, string name, decimal? price)
         {
-           
+            string message = "<b>Property:</b> {0}<br /><b>Field:</b> {1}<br /><b>Old Value:</b> {2}<br /><b>New Value:</b> {3}";
+
+            // Send Message...
+            X.Msg.Notify(new NotificationConfig()
+            {
+                Title = "Edit Record #" + id.ToString(),
+                Html = string.Format(message, id),
+                Width = 250,
+                Height = 150
+            }).Show();
+
+            X.GetCmp<Store>("Store1").GetById(id).Commit();
 
             return this.Direct();
         }
+
+        public RedirectToRouteResult SampleAction(string message, Guid ComboBoxCity)
+        {
+            Model1 dbcontext = new Model1();
+            Product product = new Product();
+            product.Name = message;
+            product.CategoryID = ComboBoxCity;
+            product.ProductID = Guid.NewGuid();
+            using (dbcontext)
+            {
+                dbcontext.Products.Add(product);
+                dbcontext.SaveChanges();
+            }
+
+            return RedirectToAction("grid");
+        }
+        
     }
 }

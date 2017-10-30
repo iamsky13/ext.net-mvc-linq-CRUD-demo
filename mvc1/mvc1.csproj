@@ -142,6 +142,7 @@
     <Compile Include="Models\Category.cs" />
     <Compile Include="Models\CIty.cs" />
     <Compile Include="Models\ExtNetModel.cs" />
+    <Compile Include="Models\getProductList.cs" />
     <Compile Include="Models\Model1.cs" />
     <Compile Include="Models\Product.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
