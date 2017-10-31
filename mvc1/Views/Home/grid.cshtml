@@ -34,7 +34,7 @@
                     params: {
                         id: e.record.data.Id,
                         name: e.record.data.Name,
-                        unitPrice: e.UnitPrice
+                        unitPrice: e.record.data.UnitPrice
                     }
                 });
             }
@@ -51,41 +51,56 @@
             }
         </style>
 
-       
+
         }
 
         @{
             <h1>Simple Array Grid</h1>
 
             @(Html.X().GridPanel()
-                .Title("Array Grid")
-                .Width(600)
-                .Height(350)
-                .Store(Html.X().Store()
-                    .Model(Html.X().Model()
-                        .Fields(
-                            new ModelField("Id"),
-                            new ModelField("Name"),
-                            new ModelField("UnitPrice"),
-                            new ModelField("catId")                           
+                        .Title("Array Grid")
+                        .ID("Grid")
+                        .Width(600)
+                        .Height(350)
+                        .Store(Html.X().Store()
+                            .Model(Html.X().Model()
+                                .Fields(
+                                    new ModelField("Id"),
+                                    new ModelField("Name"),
+                                    new ModelField("UnitPrice"),
+                                    new ModelField("catId")
+                                )
+                            )
+                            .DataSource(Model)
                         )
-                    )
-                    .DataSource(Model)
-                )
-                .ColumnModel(
-                    Html.X().Column().Text("Name").DataIndex("Name").Flex(1).Editor(Html.X().TextField()),
-                    Html.X().Column().Text("Price").DataIndex("UnitPrice")
-                    
-                )
-                .SelectionModel(Html.X().CellSelectionModel())
-                .Plugins(
-                    Html.X().CellEditing().Listeners(ls => ls.Edit.Fn = "edit")
-                )
+                        .ColumnModel(
+                            Html.X().Column().Text("Name").DataIndex("Name").Flex(1).Editor(Html.X().TextField()),
+                            Html.X().Column().Text("Price").DataIndex("UnitPrice")
+
+                        )
+                        .SelectionModel(Html.X().CellSelectionModel())
+                        .Plugins(
+                            Html.X().CellEditing().Listeners(ls => ls.Edit.Fn = "edit")
+                        )
+                        .Buttons(
+                                    Html.X().Button()
+                                        .Text("Delete")
+                                        .Handler("this.up('Grid').deleteSelected(); App.UserForm.getForm().reset();")
+                                        .DirectEvents(de =>
+                                        {
+                                            de.Click.Url = Url.Action("Button_Click");
+                                            de.Click.EventMask.ShowMask = true;
+                                            de.Click.ExtraParams.Add(new Parameter("Item", "#{Grid}.getRowsValues({selectedOnly : true})", ParameterMode.Raw));
+                                            de.Click.Confirmation.ConfirmRequest = true;
+                                        }
+
+                                    )
+                                )
 
             )
 
 
-            
+
 
 
 
@@ -93,63 +108,67 @@
 
 
         @(
-        Html.X().FormPanel()
-            .Title("Information")
-            .Width(350)
-            .BodyPadding(5)
-            .Frame(true)
-            .Layout(LayoutType.Form)
-            .FormBind(true)
-            .Items(
-                Html.X().TextField().ID("message").Name("message").FieldLabel("Name").AllowBlank(false),
-                
-                Html.X().ComboBox()
-                    .ID("ComboBoxCity")
-                    .Name("ComboBoxCity")
-                    .TypeAhead(true)
-                    .QueryMode(DataLoadMode.Local)
-                    .ForceSelection(true)
-                    .TriggerAction(TriggerAction.All)
-                    .DisplayField("Name")
-                    .ValueField("CategoryID")
-                    .EmptyText("Select Category")
+                                Html.X().FormPanel()
+                                    .Title("Information")
+                                    .Width(350)
+                                    .BodyPadding(5)
+                                    .Frame(true)
+                                    .Layout(LayoutType.Form)
+                                    .FormBind(true)
+                                    .Items(
+                                        Html.X().TextField().ID("message").Name("message").FieldLabel("Name").AllowBlank(false),
 
-                    .Store(Html.X().Store()
-                        .AutoLoad(true)
-                        .Model(Html.X().Model()
-                            .IDProperty("Id")
-                            .Fields(
-                                new ModelField("CategoryID") { Mapping = "Id" },
-                                new ModelField("Name", ModelFieldType.String) { Mapping = "Name" }
-                            )
-                        )
-                        .Proxy(Html.X().AjaxProxy()
-                            .Url(Url.Action("GetCities"))
-                            .Reader(Html.X().JsonReader().RootProperty("data"))
-                        )
-                            //.Parameters(ps =>
-                            //        ps.Add(new StoreParameter("country", "App.ComboBoxCountry.getValue()", ParameterMode.Raw))
-                            //    )
-                            .Listeners(ls =>
-                                ls.Load.Handler = @"var combo = App.ComboBoxCity;
+                                        Html.X().ComboBox()
+                                            .ID("ComboBoxCity")
+                                            .Name("ComboBoxCity")
+                                            .TypeAhead(true)
+                                            .QueryMode(DataLoadMode.Local)
+                                            .ForceSelection(true)
+                                            .TriggerAction(TriggerAction.All)
+                                            .DisplayField("Name")
+                                            .ValueField("CategoryID")
+                                            .EmptyText("Select Category")
+
+                                            .Store(Html.X().Store()
+                                                .AutoLoad(true)
+                                                .Model(Html.X().Model()
+                                                    .IDProperty("Id")
+                                                    .Fields(
+                                                        new ModelField("CategoryID") { Mapping = "Id" },
+                                                        new ModelField("Name", ModelFieldType.String) { Mapping = "Name" }
+                                                    )
+                                                )
+                                                .Proxy(Html.X().AjaxProxy()
+                                                    .Url(Url.Action("GetCities"))
+                                                    .Reader(Html.X().JsonReader().RootProperty("data"))
+                                                )
+                                                    //.Parameters(ps =>
+                                                    //        ps.Add(new StoreParameter("country", "App.ComboBoxCountry.getValue()", ParameterMode.Raw))
+                                                    //    )
+                                                    .Listeners(ls =>
+                                                        ls.Load.Handler = @"var combo = App.ComboBoxCity;
                                                     combo.setValue(records[0].get(combo.valueField));"
-                            )
-                    )
-            )
+                                                    )
+                                            )
+                                    )
+                                    
 
-            .Buttons(
-                Html.X().Button()
-                    .Text("Submit")
-                    .Icon(Icon.Lightning)
-                    .FormBind(true)
-                    .Handler("#{DirectMethods}.LogCompanyInfo(App.TextField3.getValue(), App.ComboBox3.getValue());")
-                    .DirectClickAction("SampleAction")
-            )
-        )
+                                    .Buttons(
+                                        Html.X().Button()
+                                            .Text("Submit")
+                                            .Icon(Icon.Lightning)
+                                            .FormBind(true)
+                                            .Handler("#{DirectMethods}.LogCompanyInfo(App.TextField3.getValue(), App.ComboBox3.getValue());")
+                                            .DirectClickAction("SampleAction")
+                                    )
+
+
+                                )
 
 
 
-        
+
+
             }
 
     </div>
